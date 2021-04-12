@@ -166,6 +166,62 @@ def create_app(test_config=None):
       abort(422)
 
 
+  # [20,21,22,36]
+
+
+  @app.route('/quizzes', methods=['POST'])
+  def play_quiz():
+    body = request.get_json()
+    quiz_category = body.get('quiz_category', None)
+    previous_questions = body.get('previous_questions')
+
+
+    quiz_category_id = quiz_category['id']
+
+
+    if quiz_category_id == 0:
+      quiz = Question.query.all()
+
+    else:
+      quiz = Question.query.filter(Question.category == quiz_category_id).all()
+
+
+    selected_questions = []
+    for question in quiz:
+      if question.id not in previous_questions:
+        selected_questions.append(question.format())
+
+    if len(selected_questions) > 0:
+      chosen_question = random.choice(selected_questions)
+
+      return jsonify({"success": True,
+                      "question": chosen_question
+                      })
+    else:
+      return jsonify({"success": True,
+                      "question": None
+                      })
+
+
+
+
+
+  @app.route('/play', methods=['GET'])
+  def selection_of_categories_play():
+
+    all_categories = Category.query.all()
+
+    result = {}
+    for item in all_categories:
+      result[item.id] = item.type
+    print(result)
+
+
+    return jsonify({
+      'success': True,
+      'categories': result
+    })
+
 
 
 
