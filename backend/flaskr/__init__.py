@@ -39,6 +39,9 @@ def create_app(test_config=None):
     selection = Category.query.order_by(Category.id).all()
     current_categories = [category.format() for category in selection]
 
+    if len(current_categories) == 0:
+      abort(404)
+
     return jsonify({
       'success': True,
       'categories': current_categories
@@ -52,24 +55,29 @@ def create_app(test_config=None):
   def retrieve_questions():
     try:
 
-      selection = Question.query.all()
+      selection = Question.query.order_by(Question.id).all()
+      current_questions = paginate_questions(request, selection)
 
-      categories = {}
-      for category in Category.query.all():
-        categories[category.id] = category.type
+      if current_questions is None or len(current_questions) == 0:
+        abort(404)
+      else:
+        categories_selection = Category.query.all()
 
-      pag_questions = paginate_questions(request, selection)
+        categories = {}
+        for category in Category.query.all():
+          categories[category.id] = category.type
 
 
 
-      return jsonify({
-        'success': True,
-        'questions': pag_questions,
-        'total_questions': len(selection),
-        'categories': categories,
-        'current_category': None
 
-        })
+        return jsonify({
+          'success': True,
+          'questions': current_questions,
+          'total_questions': len(selection),
+          'categories': categories,
+          'current_category': None
+
+          })
     except:
       abort(404)
 
@@ -95,7 +103,7 @@ def create_app(test_config=None):
       return jsonify({
         'success': True,
         'questions': current_questions,
-        'total_questions': len(Question.query.all()),
+        'total_questions': len(current_questions),
         'current_category': current_category.type,
         'categories': categories
         })
@@ -103,14 +111,6 @@ def create_app(test_config=None):
       abort(404)
 
 
-  '''
-
-
-  TEST: At this point, when you start the application
-  you should see questions and categories generated,
-  ten questions per page and pagination at the bottom of the screen for three pages.
-  Clicking on the page numbers should update the questions. 
-  '''
 
   @app.route('/questions/<int:question_id>', methods=['DELETE'])
   def delete_question(question_id):
@@ -140,9 +140,14 @@ def create_app(test_config=None):
       new_category = body.get('category', None)
       search = body.get('searchTerm', None)
 
+
+
       if search is not None:
         selection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(search)))
         current_questions = paginate_questions(request, selection)
+
+
+
 
         return jsonify({
           'success': True,
@@ -171,36 +176,40 @@ def create_app(test_config=None):
 
   @app.route('/quizzes', methods=['POST'])
   def play_quiz():
-    body = request.get_json()
-    quiz_category = body.get('quiz_category', None)
-    previous_questions = body.get('previous_questions')
+
+    try:
+      body = request.get_json()
+      quiz_category = body.get('quiz_category', None)
+      previous_questions = body.get('previous_questions')
 
 
-    quiz_category_id = quiz_category['id']
+      quiz_category_id = quiz_category['id']
 
 
-    if quiz_category_id == 0:
-      quiz = Question.query.all()
+      if quiz_category_id == 0:
+        quiz = Question.query.all()
 
-    else:
-      quiz = Question.query.filter(Question.category == quiz_category_id).all()
+      else:
+        quiz = Question.query.filter(Question.category == quiz_category_id).all()
 
 
-    selected_questions = []
-    for question in quiz:
-      if question.id not in previous_questions:
-        selected_questions.append(question.format())
+      selected_questions = []
+      for question in quiz:
+        if question.id not in previous_questions:
+          selected_questions.append(question.format())
 
-    if len(selected_questions) > 0:
-      chosen_question = random.choice(selected_questions)
+      if len(selected_questions) > 0:
+        chosen_question = random.choice(selected_questions)
 
-      return jsonify({"success": True,
-                      "question": chosen_question
-                      })
-    else:
-      return jsonify({"success": True,
-                      "question": None
-                      })
+        return jsonify({"success": True,
+                        "question": chosen_question
+                        })
+      else:
+        return jsonify({"success": True,
+                        "question": None
+                        })
+    except:
+      abort(422)
 
 
 
@@ -208,13 +217,15 @@ def create_app(test_config=None):
 
   @app.route('/play', methods=['GET'])
   def selection_of_categories_play():
-
     all_categories = Category.query.all()
+
+    if len(all_categories) == 0:
+      abort(404)
 
     result = {}
     for item in all_categories:
       result[item.id] = item.type
-    print(result)
+
 
 
     return jsonify({
@@ -223,23 +234,38 @@ def create_app(test_config=None):
     })
 
 
+  @app.errorhandler(404)
+  def not_found(error):
+    return jsonify({
+      "success": False,
+      "error": 404,
+      "message": "resource not found"
+    }), 404
+
+  @app.errorhandler(422)
+  def unprocessable(error):
+    return jsonify({
+      "success": False,
+      "error": 422,
+      "message": "unprocessable"
+    }), 422
 
 
+  @app.errorhandler(400)
+  def bad_request(error):
+    return jsonify({
+      "success": False,
+      "error": 400,
+      "message": "bad request"
+    }), 400
 
-
-
-
-  '''
-  @TODO: 
-  Create a POST endpoint to get questions to play the quiz. 
-  This endpoint should take category and previous question parameters 
-  and return a random questions within the given category, 
-  if provided, and that is not one of the previous questions. 
-
-  TEST: In the "Play" tab, after a user selects "All" or a category,
-  one question at a time is displayed, the user is allowed to answer
-  and shown whether they were correct or not. 
-  '''
+  @app.errorhandler(405)
+  def not_found(error):
+    return jsonify({
+      "success": False,
+      "error": 405,
+      "message": "method not allowed"
+    }), 405
 
   '''
   @TODO: 
