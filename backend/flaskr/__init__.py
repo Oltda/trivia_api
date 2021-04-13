@@ -147,6 +147,8 @@ def create_app(test_config=None):
         current_questions = paginate_questions(request, selection)
 
 
+        print(len(current_questions))
+
 
 
         return jsonify({
@@ -161,11 +163,17 @@ def create_app(test_config=None):
       else:
         question = Question(question=new_question, answer=new_answer,
                               difficulty=new_difficulty, category=new_category)
+
+
+        if new_answer == "" or new_question == "":
+          abort(422)
+
+
         question.insert()
 
         return jsonify({
             'success': True,
-            'created': question.id
+            'created': question.id,
         })
     except:
       abort(422)
@@ -181,8 +189,6 @@ def create_app(test_config=None):
       body = request.get_json()
       quiz_category = body.get('quiz_category', None)
       previous_questions = body.get('previous_questions')
-
-
       quiz_category_id = quiz_category['id']
 
 
@@ -205,8 +211,8 @@ def create_app(test_config=None):
                         "question": chosen_question
                         })
       else:
-        return jsonify({"success": True,
-                        "question": None
+        return jsonify({
+                        "question": False
                         })
     except:
       abort(422)
@@ -275,4 +281,3 @@ def create_app(test_config=None):
   
   return app
 
-    
