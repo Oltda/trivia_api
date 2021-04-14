@@ -22,7 +22,7 @@ def paginate_questions(request, selection):
 
 
 def create_app(test_config=None):
-  # create and configure the app
+
   app = Flask(__name__)
   setup_db(app)
   cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -37,21 +37,20 @@ def create_app(test_config=None):
 
 
   @app.route('/categories', methods=['GET'])
-  def selection_of_categories_play():
+  def get_categories():
     all_categories = Category.query.all()
 
     if len(all_categories) == 0:
       abort(404)
 
-    result = {}
+    categories = {}
     for item in all_categories:
-      result[item.id] = item.type
-
+      categories[item.id] = item.type
 
 
     return jsonify({
       'success': True,
-      'categories': result
+      'categories': categories
     })
 
 
@@ -59,29 +58,24 @@ def create_app(test_config=None):
   @app.route('/questions', methods=['GET'])
   def retrieve_questions():
     try:
-
       selection = Question.query.order_by(Question.id).all()
       current_questions = paginate_questions(request, selection)
 
       if current_questions is None or len(current_questions) == 0:
         abort(404)
-      else:
-        categories_selection = Category.query.all()
-
-        categories = {}
-        for category in Category.query.all():
-          categories[category.id] = category.type
 
 
+      categories = {}
+      for category in Category.query.all():
+        categories[category.id] = category.type
 
 
-        return jsonify({
-          'success': True,
-          'questions': current_questions,
-          'total_questions': len(selection),
-          'categories': categories,
-          'current_category': None
-
+      return jsonify({
+        'success': True,
+        'questions': current_questions,
+        'total_questions': len(selection),
+        'categories': categories,
+        'current_category': None
           })
     except:
       abort(404)
@@ -90,8 +84,8 @@ def create_app(test_config=None):
   @app.route('/categories/<int:category_id>/questions', methods=['GET'])
   def questions_by_category(category_id):
     try:
-
       selection = Question.query.filter(Question.category == category_id).all()
+
       if selection is None:
         abort(404)
 
@@ -125,6 +119,7 @@ def create_app(test_config=None):
         abort(404)
 
       question.delete()
+
       return jsonify({
         'success': True,
         'deleted': question_id
@@ -143,9 +138,6 @@ def create_app(test_config=None):
       new_answer = body.get('answer', None)
       new_difficulty = body.get('difficulty', None)
       new_category = body.get('category', None)
-
-
-
 
 
       question = Question(question=new_question, answer=new_answer,
@@ -168,6 +160,7 @@ def create_app(test_config=None):
 
   @app.route('/questions/search', methods=['POST'])
   def search_question():
+
     body = request.get_json()
     search = body.get('searchTerm', None)
 
@@ -184,13 +177,12 @@ def create_app(test_config=None):
 
 
 
-  # [20,21,22,36]
 
 
   @app.route('/quizzes', methods=['POST'])
   def play_quiz():
-
     try:
+
       body = request.get_json()
       quiz_category = body.get('quiz_category', None)
       previous_questions = body.get('previous_questions')
@@ -216,7 +208,8 @@ def create_app(test_config=None):
                         "question": chosen_question
                         })
       else:
-        return jsonify({
+
+        return jsonify({"success": False,
                         "question": False
                         })
     except:
@@ -225,24 +218,6 @@ def create_app(test_config=None):
 
 
 
-
-  # @app.route('/play', methods=['GET'])
-  # def selection_of_categories_play():
-  #   all_categories = Category.query.all()
-  #
-  #   if len(all_categories) == 0:
-  #     abort(404)
-  #
-  #   result = {}
-  #   for item in all_categories:
-  #     result[item.id] = item.type
-  #
-  #
-  #
-  #   return jsonify({
-  #     'success': True,
-  #     'categories': result
-  #   })
 
 
   @app.errorhandler(404)

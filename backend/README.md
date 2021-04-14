@@ -66,28 +66,164 @@ One note before you delve into your tasks: for each endpoint you are expected to
 8. Create a POST endpoint to get questions to play the quiz. This endpoint should take category and previous question parameters and return a random questions within the given category, if provided, and that is not one of the previous questions. 
 9. Create error handlers for all expected errors including 400, 404, 422 and 500. 
 
-REVIEW_COMMENT
-```
-This README is missing documentation of your endpoints. Below is an example for your endpoint to get all categories. Please use it as a reference for creating your documentation and resubmit your code. 
+API Endpoints and Expected Behavior
 
-Endpoints
-GET '/categories'
-GET ...
-POST ...
-DELETE ...
+GET /categories
+General:
+Returns a dictionary of category objects and success value
+Sample: curl http://127.0.0.1:5000/categories
 
-GET '/categories'
-- Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
-- Request Arguments: None
-- Returns: An object with a single key, categories, that contains a object of id: category_string key:value pairs. 
-{'1' : "Science",
-'2' : "Art",
-'3' : "Geography",
-'4' : "History",
-'5' : "Entertainment",
-'6' : "Sports"}
+	{"categories":
+	{
+	"1":"Science",
+	"2":"Art",
+	"3":"Geography",
+	"4":"History",
+	"5":"Entertainment",
+	"6":"Sports"},
+	"success":true}
 
-```
+
+
+
+GET /questions
+General:
+This endpoint returns a dictionary of all available categories, list of question objects
+success value and total number of questions
+
+
+
+GET /categories/{category_id}/questions'
+General:
+This endpoint shows all the questions in a given category specified by the category_id in the url.
+It returns a list of category objects, success value, current category, 
+a list of question objects in the current category and its length.
+
+sample: curl http://127.0.0.1:5000/categories/2/questions
+
+	{"categories":[
+	{"id":1,
+	"type":"Science"
+	},	
+	{
+	"id":2,
+	"type":"Art"
+	},
+	{"id":3,
+	"type":"Geography"
+	},
+	{"id":4,
+	"type":"History"
+	},
+	{"id":5,
+	"type":"Entertainment"
+	},
+	{"id":6,
+	"type":"Sports"
+	}],
+	
+	"current_category":"Art",
+	
+	"questions":[
+	{
+	"answer":"Escher",
+	"category":2,
+	"difficulty":1,
+	"id":16,
+	"question":"Which Dutch graphic artist\u2013initials M C was a creator of optical illusions?"
+	},
+	{"answer":"Mona Lisa",
+	"category":2,
+	"difficulty":3,
+	"id":17,
+	"question":"La Giaconda is better known as what?"
+	},
+	{
+	"answer":"One",
+	"category":2,
+	"difficulty":4,
+	"id":18,
+	"question":"How many paintings did Van Gogh sell in his lifetime?"
+	},
+	{
+	"answer":"Jackson Pollock",
+	"category":2,
+	"difficulty":2,
+	"id":19,
+	"question":"Which American artist was a pioneer of Abstract Expressionism, and a leading exponent of action painting?"
+	}],
+	"success":true,
+	"total_questions":4} 
+
+
+DELETE /questions/{question_id}
+General:
+This endpoint deletes a question with the id specified in the URL if it exists. 
+It returns success value and id of the deleted question
+Sample: curl http://127.0.0.1:5000/questions/41 -X DELETE
+
+    {"deleted":41,"success":true}
+
+POST /questions
+General:
+This endpoint creates a new question.
+The required input is: question, answer, difficulty score and category id
+Returns the id of the new question and success value
+
+Example: curl http://127.0.0.1:5000/questions -X POST -H "Content-Type: application/json" -d'{"question":"What is the capital of Germany?", "answer":"Berlin", "difficult":"1", "category":"3"}'
+
+	{
+  	"created":45,
+  	"success":true
+	}
+
+
+POST /questions/search
+General:
+This endpoint handles search requests.
+It matches all the questions that contain string typed by the user in the form.
+Returns a list of question objects, its length and success value
+
+sample: curl http://127.0.0.1:5000/questions/search -X POST -H "Content-Type: application/json" -d'{"searchTerm": "who"}'
+
+	{
+	"questions":[
+	{
+	"answer":"George Washington Carver",
+	"category":4,
+	"difficulty":2,
+	"id":12,
+	"question":"Who invented Peanut Butter?"
+	},
+	{"answer":"Alexander Fleming",
+	"category":1,
+	"difficulty":3,
+	"id":21,
+	"question":"Who discovered penicillin?"
+	}
+	],"success":true,
+	"total_questions":2
+	}
+
+POST /quizzes
+General:
+This endpoint returns a random question based on
+a category and previous question parameters to ensure that questions
+do not repeat and success value
+
+sample: curl http://127.0.0.1:5000/quizzes -X POST -H "Content-Type: application/json" -d'{"quiz_category": { "id": "2", "type":"Art"}, "previous_questions":["18", "19"]}'
+
+	{
+	"question":
+	{
+	"answer":"Escher",
+	"category":2,
+	"difficulty":1,
+	"id":16,
+	"question”: “Which Dutch graphic artist\u2013initials M C was a creator of optical illusions?"
+	},
+	"success":true}
+
 
 
 ## Testing
