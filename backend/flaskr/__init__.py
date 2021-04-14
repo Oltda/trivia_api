@@ -34,20 +34,25 @@ def create_app(test_config=None):
     return response
 
 
-  @app.route('/categories', methods=['GET'])
-  def retrieve_categories():
-    selection = Category.query.order_by(Category.id).all()
-    current_categories = [category.format() for category in selection]
 
-    if len(current_categories) == 0:
+
+  @app.route('/categories', methods=['GET'])
+  def selection_of_categories_play():
+    all_categories = Category.query.all()
+
+    if len(all_categories) == 0:
       abort(404)
+
+    result = {}
+    for item in all_categories:
+      result[item.id] = item.type
+
+
 
     return jsonify({
       'success': True,
-      'categories': current_categories
+      'categories': result
     })
-
-
 
 
 
@@ -138,45 +143,45 @@ def create_app(test_config=None):
       new_answer = body.get('answer', None)
       new_difficulty = body.get('difficulty', None)
       new_category = body.get('category', None)
-      search = body.get('searchTerm', None)
 
 
 
-      if search is not None:
-        selection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(search)))
-        current_questions = paginate_questions(request, selection)
 
 
-        print(len(current_questions))
+      question = Question(question=new_question, answer=new_answer,
+                            difficulty=new_difficulty, category=new_category)
 
 
-
-        return jsonify({
-          'success': True,
-          'questions': current_questions,
-          'total_questions': len(selection.all()),
-          'current_category': None
-
-        })
+      if new_answer == "" or new_question == "":
+        abort(422)
 
 
-      else:
-        question = Question(question=new_question, answer=new_answer,
-                              difficulty=new_difficulty, category=new_category)
+      question.insert()
 
-
-        if new_answer == "" or new_question == "":
-          abort(422)
-
-
-        question.insert()
-
-        return jsonify({
+      return jsonify({
             'success': True,
             'created': question.id,
         })
     except:
       abort(422)
+
+
+  @app.route('/questions/search', methods=['POST'])
+  def search_question():
+    body = request.get_json()
+    search = body.get('searchTerm', None)
+
+    selection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(search)))
+    current_questions = paginate_questions(request, selection)
+
+    return jsonify({
+      'success': True,
+      'questions': current_questions,
+      'total_questions': len(selection.all()),
+      'current_category': None
+
+    })
+
 
 
   # [20,21,22,36]
@@ -221,23 +226,23 @@ def create_app(test_config=None):
 
 
 
-  @app.route('/play', methods=['GET'])
-  def selection_of_categories_play():
-    all_categories = Category.query.all()
-
-    if len(all_categories) == 0:
-      abort(404)
-
-    result = {}
-    for item in all_categories:
-      result[item.id] = item.type
-
-
-
-    return jsonify({
-      'success': True,
-      'categories': result
-    })
+  # @app.route('/play', methods=['GET'])
+  # def selection_of_categories_play():
+  #   all_categories = Category.query.all()
+  #
+  #   if len(all_categories) == 0:
+  #     abort(404)
+  #
+  #   result = {}
+  #   for item in all_categories:
+  #     result[item.id] = item.type
+  #
+  #
+  #
+  #   return jsonify({
+  #     'success': True,
+  #     'categories': result
+  #   })
 
 
   @app.errorhandler(404)
